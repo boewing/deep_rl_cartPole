@@ -57,7 +57,7 @@ actions = range(env.action_space.n)
 
 env = DiscretizedObservationWrapper(
     env, 
-    n_bins=64, 
+    n_bins=10, 
     low=[-2.4, -2.0, -0.42, -3.5], 
     high=[2.4, 2.0, 0.42, 3.5]
 )
@@ -67,7 +67,7 @@ ob = env.reset()
 rewards = []
 reward = 0.0
 
-n_steps = 1000000
+n_steps = 10000000
 epsilon = 0.1  # 10% chances to apply a random action
 
 
@@ -79,9 +79,10 @@ for step in range(n_steps):
     ob_next, r, done, _ = env.step(a)
     update_Q(ob, r, a, ob_next, done)
     reward += r
-    # env.render()
+    if step == 0 or step > n_steps - 1000:
+        env.render()
     if done:
-        # print("Episode finished after {} timesteps".format(t))
+        print("Episode finished after {:4d} timesteps".format(t))
         t_history.append(t)
         # print(t)
         t = 0
@@ -93,6 +94,7 @@ for step in range(n_steps):
         ob = ob_next
 
 print("finished after ", time.time() - timing_start)
-# plt.plot(t_history)
 plt.scatter(range(len(t_history)), t_history, marker="x", alpha=0.2)
+plt.xlabel("Episodes")
+plt.ylabel("Achieved timesteps")
 plt.show()

@@ -15,10 +15,10 @@ def dense_nn(input_dim, layers_sizes, scope_name):
         layer has the size layers_sizes[-1].
     """
     model = keras.Sequential()
-    for layer_size in layers_sizes:
-        model.add(layers.Dense(layer_size, input_dim=input_dim, activation=keras.activations.relu))
+    for layer_size in layers_sizes[:-1]:
+        model.add(layers.Dense(layer_size, input_dim=input_dim, activation=keras.activations.tanh))
         input_dim = None
-    
+    model.add(layers.Dense(layers_sizes[-1], input_dim=input_dim, activation=keras.activations.linear))
     return model
 
 
@@ -29,8 +29,8 @@ def update_Q(Q : Model, remember):
     s_next = np.asanyarray([member[2] for member in remember])
     r = np.asanyarray([member[3] for member in remember])
 
-    old_q_vals = Q.predict(s, batch_size=1)
-    new_q_vals = Q.predict(s_next, batch_size=1)
+    old_q_vals = Q.predict(s, batch_size=32)
+    new_q_vals = Q.predict(s_next, batch_size=32)
     
     old_q_vals[range(len(a)),a] = r + gamma * np.amax(new_q_vals, axis=1)
     hist = Q.fit(x=s, y=old_q_vals, epochs=10, verbose=0)
@@ -58,16 +58,15 @@ actions = range(env.action_space.n)
 observation_size = env.observation_space.shape[0]
 n = 16
 q = dense_nn(observation_size, [n,n,2], "")
-q_target = dense_nn(observation_size, [n,n,2], "")
 
-q.compile(optimizer=keras.optimizers.Adam(learning_rate=0.01), loss=keras.losses.mean_squared_error, metrics=['accuracy'])
+q.compile(optimizer=keras.optimizers.Adam(learning_rate=0.002), loss=keras.losses.mean_squared_error, metrics=['accuracy'])
 
 ob = env.reset()
 rewards = []
 reward = 0.0
 
-n_steps = 1000000
-epsilon = 1  # 10% chances to apply a random action
+n_steps = 200000
+epsilon = 1  # intial chance to apply a random action
 
 remember = []
 
@@ -85,7 +84,7 @@ for step in range(n_steps):
     if done:
         update_Q(q, remember)
         remember = []
-        print("Episode finished after {} timesteps".format(t))
+        print(f" {step/float(n_steps) * 100:3.0f} % completed: Episode finished after {t:4d} timesteps")
         t_history.append(t)
         t = 0
         rewards.append(reward)
@@ -99,4 +98,6 @@ for step in range(n_steps):
 
 print("finished after ", time.time() - timing_start)
 plt.scatter(range(len(t_history)), t_history, marker="x", alpha=0.2)
+plt.xlabel("Episodes")
+plt.ylabel("Achieved timesteps")
 plt.show()
