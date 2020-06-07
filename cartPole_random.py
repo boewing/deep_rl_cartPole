@@ -1,21 +1,14 @@
 import gym
 env = gym.make('CartPole-v0')
-# env = gym.make('Acrobot-v1')
+
 for i_episode in range(20):
     observation = env.reset()
     for t in range(200):
-        env.render()
-        # print(observation)
-        angle = observation[2]
-        d_angle = observation[3]
-        if angle + d_angle < 0:
-            action = 0
-        else:
-            action = 1
-        # action = env.action_space.sample()
-        # print(action)
+        action = env.action_space.sample()
         observation, reward, done, info = env.step(action)
+        env.render()
         if done:
-            print("Episode finished after {} timesteps".format(t+1))
+            print("Episode finished after {:4d} timesteps".format(t+1))
             break
+
 env.close()
